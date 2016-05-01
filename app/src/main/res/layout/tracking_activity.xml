@@ -1,0 +1,97 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="7"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/map"
+                android:name="com.google.android.gms.maps.SupportMapFragment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:context="com.example.huzaimakhan.mecspoortest.TrackingActivity" />
+
+
+            <com.getbase.floatingactionbutton.FloatingActionsMenu
+                android:id="@+id/multiple_actions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                fab:fab_addButtonColorNormal="#455A64"
+                fab:fab_addButtonColorPressed="#607D8B"
+                fab:fab_addButtonPlusIconColor="@color/white"
+                fab:fab_labelStyle="@style/menu_labels_style">
+
+                <com.getbase.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/showDatePicker"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    fab:fab_colorNormal="#607D8B"
+                    fab:fab_colorPressed="#455A64"
+                    fab:fab_icon="@drawable/ic_calendar"
+                    fab:fab_size="mini"
+                    fab:fab_title="Change Date" />
+
+                <com.getbase.floatingactionbutton.FloatingActionButton
+                    android:id="@+id/showTimePicker"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    fab:fab_colorNormal="#607D8B"
+                    fab:fab_colorPressed="#455A64"
+                    fab:fab_icon="@drawable/ic_clock"
+                    fab:fab_size="mini"
+                    fab:fab_title="Change Time" />
+
+            </com.getbase.floatingactionbutton.FloatingActionsMenu>
+        </RelativeLayout>
+
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/ll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <fr.castorflex.android.smoothprogressbar.SmoothProgressBar
+                android:id="@+id/progressbar"
+                style="@style/GNowProgressBar"
+                android:layout_width="match_parent"
+                android:layout_height="8dp"
+                android:layout_alignParentBottom="true"
+                android:indeterminate="true" />
+
+            <com.appyvet.rangebar.RangeBar xmlns:custom="http://schemas.android.com/apk/res-auto"
+                android:id="@+id/rangebar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_marginLeft="8dp"
+                android:layout_marginRight="8dp"
+                custom:pinMaxFont="12sp"
+                custom:tickEnd="59"
+                custom:tickInterval="1"
+                custom:tickStart="0" />
+
+        </RelativeLayout>
+    </LinearLayout>
+</LinearLayout>
