@@ -2,7 +2,6 @@ package com.huzaima.mecspoor;
 
 import android.app.IntentService;
 import android.content.Intent;
-import android.util.Log;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.CameraPosition;
@@ -37,16 +36,13 @@ public class FetchDataService extends IntentService {
 
     @Override
     public void onDestroy() {
-        Log.i("MoreTesting", "before stop self ");
         flag = false;
-        Log.i("MoreTesting", "after stop self ");
         super.onDestroy();
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
 
-        Log.i("Dad", "Enterd doInBackground of Fetchdata");
         final MapsActivity parentActivity = (MapsActivity) MapsActivity.mapsActivity;
         String requestURL;
         String tempSuper = intent.getStringExtra("TempSuper");
@@ -68,14 +64,11 @@ public class FetchDataService extends IntentService {
 
             }
         });
-
         vehicleMarker = parentActivity.getVehicleMarker();
 
         synchronized (this) {
             while (flag) {
                 StringBuilder response = new StringBuilder();
-
-                Log.i("Dad", "A new service");
 
                 try {
                     if (bounds != null) {
@@ -102,7 +95,7 @@ public class FetchDataService extends IntentService {
                 } catch (ProtocolException e) {
                 } catch (IOException e) {
                 }
-                int count = 0;
+
                 try {
                     JSONObject rootObject = new JSONObject(response.toString());
                     JSONObject dataObject = rootObject.getJSONObject("data");
@@ -127,7 +120,6 @@ public class FetchDataService extends IntentService {
 
                                     float heading;
                                     if (currentVehicle.isNull("heading")) {
-                                        Log.i("value ofheading ", "was null omg");
                                         heading = 0;
                                     } else
                                         heading = Float.parseFloat(currentVehicle.getString("heading"));
@@ -138,12 +130,11 @@ public class FetchDataService extends IntentService {
                                     } else {
                                         Thread.sleep(50);
                                         parentActivity.addVehicleToMap(new LatLng(lat2, lng2), agencyID, vehicleID);
-                                    }//else
-                                    count++;
-                                }//if tracking status is up either update or add
-                            }//for all vehicles
-                        }//if agency exists
-                    }//For all agencies
+                                    }
+                                }
+                            }
+                        }
+                    }
                 } catch (JSONException e) {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -154,8 +145,8 @@ public class FetchDataService extends IntentService {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            }//while
-        }//Sync
+            }
+        }
         parentActivity.setVehicleMarker(vehicleMarker);
     }
 }

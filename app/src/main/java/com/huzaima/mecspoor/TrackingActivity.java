@@ -4,11 +4,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.appyvet.rangebar.RangeBar;
 import com.getbase.floatingactionbutton.FloatingActionButton;
@@ -158,7 +159,6 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
     }
 
     public void trailDrawer(int m1, int m2) {
-        Log.i("Response", "Entring Trail Drawer");
         googleMap.clear();
         ArrayList<LatLng> points = new ArrayList<>();
         LatLngBounds.Builder cameraSetter = new LatLngBounds.Builder();
@@ -166,21 +166,13 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         for (int i = 0; i < a.size(); i++) {
 
             if (a.get(i).get(2) >= m1 && a.get(i).get(2) <= m2) {
-                Log.i("Response", "Entering if inside trail drawer with " + a.get(i).get(0) + " " + a.get(i).get(1) + " " + a.get(i).get(2));
                 points.add(new LatLng(a.get(i).get(0), a.get(i).get(1)));
                 cameraSetter.include(new LatLng(a.get(i).get(0), a.get(i).get(1)));
             }
-        }//ForLoop
+        }
         if (!points.isEmpty()) {
-
-
             googleMap.addMarker(new MarkerOptions().position(points.get(0)).icon((BitmapDescriptorFactory.fromResource(R.drawable.sgd))));
             googleMap.addMarker(new MarkerOptions().position(points.get(points.size() - 1)).icon((BitmapDescriptorFactory.fromResource(R.drawable.srd))));
-            //googleMap.addCircle(new CircleOptions().center(points.get(0)).fillColor(Color.GREEN).radius(7));
-            // googleMap.addCircle(new CircleOptions().center(points.get(points.size()-1)).fillColor(Color.RED).radius(7));
-
-
-            Log.i("Response", "Should draw polyline");
             googleMap.addPolyline(new PolylineOptions().addAll(points).color(R.color.materialdesingcolor).width(20));
             googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(cameraSetter.build(), 100));
         }
@@ -202,29 +194,22 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         @Override
         protected Void doInBackground(Void... voids) {
 
-            Log.i("Response", "Entring doInBackground");
             String temp = "";
             a.clear();
 
             try {
                 URL url = new URL("https://api.mongolab.com/api/1/databases/secondmecspoor/collections/vehicles_data?q={\"vehicle_id\":\"" + vehicleID + "\",\"timestamp.hour\":\"" + hour + "\",\"timestamp.date\":\"" + day + "\"}&apiKey=4R0C02NuwXrRDEIBgqLAUS5pHGkpBiKH");
-                Log.i("Response", url.toString());
                 HttpURLConnection con = (HttpURLConnection) url.openConnection();
                 con.setRequestMethod("GET");
                 con.connect();
-                Log.i("RESPONSE CODE", String.valueOf(con.getResponseCode()));
                 BufferedReader rd = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 temp = rd.readLine();
                 rd.close();
                 con.disconnect();
 
-                Log.i("Response original", "thisIsALog " + temp);
-
             } catch (MalformedURLException e) {
-                Log.i("Response", "URL ERROR");
             } catch (IOException e) {
                 e.printStackTrace();
-                Log.i("Reponse", "IO ERROR");
             }
             try {
                 JSONArray rootArray = new JSONArray(temp);
@@ -234,16 +219,12 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
                     if (c < rootArray.length() - 1) {
                         roadPoints += "|";
                     }
-                }//For Loop
-
-                Log.i("Response", "Road points " + roadPoints);
+                }
 
                 URL url = new URL("https://roads.googleapis.com/v1/snapToRoads?path=" + roadPoints + "&interpolate=true&key=" + getString(R.string.google_maps_key));
-                Log.i("Response", url.toString());
                 HttpURLConnection con = (HttpURLConnection) url.openConnection();
                 con.setRequestMethod("GET");
                 con.connect();
-                Log.i("RESPONSE CODE", String.valueOf(con.getResponseCode()));
                 BufferedReader rd = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 String line;
                 StringBuilder response = new StringBuilder();
@@ -252,7 +233,6 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
                 rd.close();
                 con.disconnect();
 
-                Log.i("Response", "Roads api response " + response.toString());
                 ArrayList<Double> abc;
                 JSONObject root = new JSONObject(response.toString());
                 JSONArray array = root.getJSONArray("snappedPoints");
@@ -264,14 +244,12 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
                     abc.add(bc.getJSONObject("location").getDouble("longitude"));
                     if (bc.has("originalIndex")) {
                         count = bc.getInt("originalIndex");
-                        Log.i("Minute Found", "" + count);
                         abc.add(count);
                     } else {
                         abc.add(count);
                     }
                     a.add(abc);
                 }
-                Log.i("Response", "" + a.size());
             } catch (MalformedURLException e1) {
                 e1.printStackTrace();
             } catch (ProtocolException e1) {
@@ -281,10 +259,8 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
             } catch (IOException e1) {
                 e1.printStackTrace();
             }
-            Log.i("Response", "Finished fetching data");
-
             return null;
-        }//doInBackground
+        }
 
         @Override
         protected void onPostExecute(Void aVoid) {
@@ -294,6 +270,12 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
             progressBar.setVisibility(View.GONE);
             rangeBar.setVisibility(View.VISIBLE);
             trailDrawer(0, Integer.parseInt(minute));
+
+            if (a.size() <= 0) {
+                Toast toast = Toast.makeText(getApplicationContext(), "Vehicle didn't move during specified time.", Toast.LENGTH_LONG);
+                toast.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.CENTER_VERTICAL, 0, 0);
+                toast.show();
+            }
         }
-    }//HistoryFetcher
-}//TrackingActivity
+    }
+}

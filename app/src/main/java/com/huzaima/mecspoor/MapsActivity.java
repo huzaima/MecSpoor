@@ -4,10 +4,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.ViewSwitcher;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -44,7 +45,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     static String tempSuper;
     public static ArrayList<JSONObject> agencies = null;
-    private boolean stop = false;
     public static GoogleMap googleMap;
     private List<Marker> agencyMarker = new ArrayList<>();
     public static HashMap<String, Marker> vehicleMarker = new HashMap<>();
@@ -58,22 +58,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     Intent serviceIntent;
     ImageView mImageView;
     ViewSwitcher switcher;
+    TextView touchToContinue;
+    Handler handler;
+    Runnable r1, r2;
 
     @Override
     protected void onDestroy() {
-        //stopService(serviceIntent);
         super.onDestroy();
-        Log.v("lifecycle", "onDestory");
     }
 
     @Override
     protected void onPause() {
         callIt = false;
         super.onPause();
-        stop = true;
         if (serviceIntent != null)
             stopService(serviceIntent);
-        Log.v("lifecycle", "onPause");
     }
 
 
@@ -83,6 +82,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        handler = new Handler();
+
+        touchToContinue = (TextView) findViewById(R.id.touch_to_continue);
+
+        r1 = new Runnable() {
+            @Override
+            public void run() {
+                touchToContinue.setVisibility(View.VISIBLE);
+                handler.postDelayed(r2, 750);
+            }
+        };
+
+        r2 = new Runnable() {
+            @Override
+            public void run() {
+                touchToContinue.setVisibility(View.INVISIBLE);
+                handler.postDelayed(r1, 750);
+            }
+        };
+
+        handler.post(r1);
 
         switcher = (ViewSwitcher) findViewById(R.id.viewSwitcher);
 
@@ -93,26 +113,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapsActivity = this;
         callIt = true;
 
-//        switcher.showNext();
-
         mImageView = (ImageView) findViewById(R.id.imageView);
         mImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                handler.removeCallbacksAndMessages(null);
                 switcher.showNext();
                 startService(serviceIntent);
             }
         });
-
-
-    }//OnCreate
+    }
 
     @Override
     protected void onStart() {
         super.onStart();
-        Log.v("lifecycle", "onStart");
-        stop = false;
-
     }
 
     public HashMap<String, Marker> getVehicleMarker() {
@@ -148,19 +162,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         try {
             new FetchAndDrawAgencies().execute().get();
         } catch (InterruptedException e) {
-
         } catch (ExecutionException e) {
-
         }
-        //mHandler.post(runnable);
-
 
         serviceIntent = new Intent(getApplicationContext(), FetchDataService.class);
-        //  myBundle.putParcelable("GoogleMap", (android.os.Parcelable) vehicleMarker);
-        //myBundle.putParcelable("GoogleMap",  this);
-
         serviceIntent.putExtra("TempSuper", tempSuper);
-
         startService(serviceIntent);
 
         googleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
@@ -171,7 +177,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 b.putParcelable("Position", googleMap.getCameraPosition());
                 b.putString("VehicleId", marker.getTitle());
 
-
                 DatePickerDialog dpd = DatePickerDialog.newInstance(
                         MapsActivity.this,
                         now.get(Calendar.YEAR),
@@ -180,7 +185,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 );
                 dpd.setThemeDark(true);
                 dpd.show(getFragmentManager(), "Test");
-
             }
 
             @Override
@@ -190,11 +194,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onMarkerDragEnd(Marker marker) {
             }
-
-        });//On Marker Drag
-
-    }//onMapReady
-
+        });
+    }
 
     @Override
     public void onDateSet(DatePickerDialog datePickerDialog, int i, int i2, int i3) {
@@ -241,16 +242,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onResume() {
         super.onResume();
-        stop = false;
         if (vehicleMarker != null)
             vehicleMarker.clear();
         if (!callIt)
             startService(serviceIntent);
-        Log.v("lifecycle", "onResume");
     }
 
-
-    public void addAgencyToMap(final LatLng latLng, final String agencyID, final String longName, final String shortName, final String url) {
+    public void addAgencyToMap(final LatLng latLng, final String agencyID, final String longName,
+                               final String shortName, final String url) {
         runOnUiThread(new Runnable() {
                           @Override
                           public void run() {
@@ -263,7 +262,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                       }
         );
     }
-
 
     public class FetchAndDrawAgencies extends AsyncTask<Void, Void, Void> {
 
@@ -306,25 +304,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         addAgencyToMap(new LatLng(lat, lng), agencyID, longName, shortName, url);
                     } catch (JSONException e1) {
                     }
-                }//For loop through all agencies
-
+                }
             return null;
-        }//Do in Background
+        }
 
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            Log.i("Marib", "Going into post exevute of fetchAndDrawAgencies data");
         }
-    }//fetchAndDrawAgencies
-
+    }
 
     public void addVehicleToMap(final LatLng latLng, final String agencyID, final String vehicleID) {
 
         runOnUiThread(new Runnable() {
                           @Override
                           public void run() {
-
                               vehicleMarker.put(vehicleID, googleMap.addMarker(new MarkerOptions().position(latLng)
                                       .title(vehicleID)
                                       .snippet("Vehicle#" + vehicleID + " belongs to agency#" + agencyID)
@@ -333,29 +327,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                       .flat(true)
                                       .rotation(0)
                                       .icon(BitmapDescriptorFactory.fromResource(R.drawable.ok_car))));
-                              Log.i("ClassCA", "Add vehicle " + vehicleID);
                           }
 
                       }
         );
-
     }
 
     public void updateVehiclePosition(final LatLng latlng, final String vehicleID, final float heading) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-
                 vehicleMarker.get(vehicleID).setPosition(latlng);
-
-                Log.i("VlaueOfHeading", String.valueOf(heading));
                 vehicleMarker.get(vehicleID).setRotation(heading);
-
-                Log.i("ClassCA", "Updating vehicle " + vehicleID);
             }
         });
     }
-
 
     public static ArrayList<JSONObject> parseAgencies(final String jsonString) {
         if (jsonString == null)
@@ -377,5 +363,4 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         return agencies;
     }
-
 }
